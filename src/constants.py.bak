@@ -54,100 +54,6 @@ C_P2_OUTLINE = ( 26,  96, 128)
 C_P2_SHOE    = ( 26,  48, 128)
 C_P2_GLOVE   = (255, 255, 255)
 
-# Personaje 3 — Tetera (verde)
-C_P3_BODY    = (100, 210,  90)
-C_P3_OUTLINE = ( 30,  90,  20)
-C_P3_SHOE    = ( 20,  70,  10)
-C_P3_GLOVE   = (240, 240, 200)
-
-# Personaje 4 — Barril (rojo oscuro)
-C_P4_BODY    = (210,  70,  50)
-C_P4_OUTLINE = (100,  25,  10)
-C_P4_SHOE    = ( 80,  20,   5)
-C_P4_GLOVE   = (255, 200, 160)
-
-# Personaje 5 — Frasco (morado)
-C_P5_BODY    = (170, 100, 230)
-C_P5_OUTLINE = ( 70,  20, 110)
-C_P5_SHOE    = ( 60,  15,  90)
-C_P5_GLOVE   = (255, 220, 255)
-
-# Personaje 6 — Botella (naranja)
-C_P6_BODY    = (240, 140,  30)
-C_P6_OUTLINE = (120,  60,   5)
-C_P6_SHOE    = (100,  45,   5)
-C_P6_GLOVE   = (255, 240, 210)
-
-# Catálogo de personajes disponibles
-CHARACTERS = [
-    {
-        "name": "COPAS",
-        "title": "La Copa Dorada",
-        "palette": {
-            "body":    C_P1_BODY,
-            "outline": C_P1_OUTLINE,
-            "shoe":    C_P1_SHOE,
-            "glove":   C_P1_GLOVE,
-            "collar":  (232, 168, 48),
-        },
-    },
-    {
-        "name": "JARRO",
-        "title": "El Jarro Azul",
-        "palette": {
-            "body":    C_P2_BODY,
-            "outline": C_P2_OUTLINE,
-            "shoe":    C_P2_SHOE,
-            "glove":   C_P2_GLOVE,
-            "collar":  (90, 180, 200),
-        },
-    },
-    {
-        "name": "TETERA",
-        "title": "La Tetera Verde",
-        "palette": {
-            "body":    C_P3_BODY,
-            "outline": C_P3_OUTLINE,
-            "shoe":    C_P3_SHOE,
-            "glove":   C_P3_GLOVE,
-            "collar":  (60, 160, 50),
-        },
-    },
-    {
-        "name": "BARRIL",
-        "title": "El Barril Rojo",
-        "palette": {
-            "body":    C_P4_BODY,
-            "outline": C_P4_OUTLINE,
-            "shoe":    C_P4_SHOE,
-            "glove":   C_P4_GLOVE,
-            "collar":  (180, 50, 30),
-        },
-    },
-    {
-        "name": "FRASCO",
-        "title": "El Frasco Mágico",
-        "palette": {
-            "body":    C_P5_BODY,
-            "outline": C_P5_OUTLINE,
-            "shoe":    C_P5_SHOE,
-            "glove":   C_P5_GLOVE,
-            "collar":  (130, 60, 190),
-        },
-    },
-    {
-        "name": "BOTELLA",
-        "title": "La Botella Naranja",
-        "palette": {
-            "body":    C_P6_BODY,
-            "outline": C_P6_OUTLINE,
-            "shoe":    C_P6_SHOE,
-            "glove":   C_P6_GLOVE,
-            "collar":  (200, 100, 10),
-        },
-    },
-]
-
 C_HP_BG      = ( 42,  16,   0)
 C_HP_BAR     = (220,  40,  40)
 C_HP_BORDER  = (139,  69,   0)
@@ -175,7 +81,6 @@ class State:
 class GameState:
     TITLE      = "title"
     MENU       = "menu"
-    CHAR_SELECT = "char_select"
     ANNOUNCE   = "announce"
     FIGHT      = "fight"
     ROUND_END  = "round_end"

@@ -4,7 +4,7 @@
 import pygame
 import math
 from src.constants import *
-from src.fighter import Fighter, State
+from src.fighter import Fighter
 from src.background import Background
 from src.hud import HUD
 
@@ -22,21 +22,32 @@ def _outline_text(surf, font, text, color, outline, cx, cy):
     surf.blit(rendered, (x, y))
 
 
-def _make_fighter(x: int, facing: int, is_player: bool, char_idx: int) -> "Fighter":
-    ch = CHARACTERS[char_idx]
+def _make_p1() -> Fighter:
     return Fighter(
-        x=x, facing=facing, is_player=is_player,
-        palette=ch["palette"],
-        name=ch["name"],
+        x=150, facing=1, is_player=True,
+        palette={
+            "body":    C_P1_BODY,
+            "outline": C_P1_OUTLINE,
+            "shoe":    C_P1_SHOE,
+            "glove":   C_P1_GLOVE,
+            "collar":  C_SKY_BOT,
+        },
+        name="COPAS",
     )
 
 
-def _make_p1(char_idx: int = 0) -> "Fighter":
-    return _make_fighter(150, 1, True, char_idx)
-
-
-def _make_p2(char_idx: int = 1) -> "Fighter":
-    return _make_fighter(720, -1, False, char_idx)
+def _make_p2() -> Fighter:
+    return Fighter(
+        x=720, facing=-1, is_player=False,
+        palette={
+            "body":    C_P2_BODY,
+            "outline": C_P2_OUTLINE,
+            "shoe":    C_P2_SHOE,
+            "glove":   C_P2_GLOVE,
+            "collar":  (90, 180, 200),
+        },
+        name="JARRO",
+    )
 
 
 # ─────────────────────────────────────────────
@@ -438,231 +449,6 @@ class ComingSoonScreen:
 
 
 # ─────────────────────────────────────────────
-#  Pantalla de Selección de Personaje
-# ─────────────────────────────────────────────
-class CharSelectScreen:
-    """Pantalla de selección de personaje para P1 y P2."""
-
-    CARD_W, CARD_H = 130, 170
-    COLS = 3
-    ROWS = 2
-
-    def __init__(self, fonts):
-        self.font_big, self.font_med, self.font_small = fonts
-        self.frame = 0
-        # Selección actual (índice en CHARACTERS)
-        self.p1_sel = 0
-        self.p2_sel = 1
-        # Confirmados
-        self.p1_confirmed = False
-        self.p2_confirmed = False
-        # Cursor activo: "p1" o "p2"
-        self.cursor = "p1"
-        self._card_rects: list[pygame.Rect] = []
-        self._ready_rect = None
-
-    def _grid_origin(self):
-        cols = self.COLS
-        rows = self.ROWS
-        gap_x, gap_y = 20, 16
-        w = cols * self.CARD_W + (cols - 1) * gap_x
-        h = rows * self.CARD_H + (rows - 1) * gap_y
-        sx = SCREEN_W // 2 - w // 2
-        sy = 100
-        return sx, sy, gap_x, gap_y
-
-    def update(self):
-        self.frame += 1
-
-    def handle_key(self, key):
-        """Devuelve (p1_idx, p2_idx) si ambos confirmaron, o None."""
-        if not self.p1_confirmed:
-            # P1 navega con WASD / flechas
-            if key in (pygame.K_LEFT, pygame.K_a):
-                self.p1_sel = (self.p1_sel - 1) % len(CHARACTERS)
-            elif key in (pygame.K_RIGHT, pygame.K_d):
-                self.p1_sel = (self.p1_sel + 1) % len(CHARACTERS)
-            elif key in (pygame.K_UP, pygame.K_w):
-                self.p1_sel = (self.p1_sel - self.COLS) % len(CHARACTERS)
-            elif key in (pygame.K_DOWN, pygame.K_s):
-                self.p1_sel = (self.p1_sel + self.COLS) % len(CHARACTERS)
-            elif key in (pygame.K_j, pygame.K_RETURN, pygame.K_SPACE):
-                self.p1_confirmed = True
-                self.cursor = "p2"
-        else:
-            # P2 navega con teclas numpad / flechas
-            if key == pygame.K_LEFT:
-                self.p2_sel = (self.p2_sel - 1) % len(CHARACTERS)
-            elif key == pygame.K_RIGHT:
-                self.p2_sel = (self.p2_sel + 1) % len(CHARACTERS)
-            elif key == pygame.K_UP:
-                self.p2_sel = (self.p2_sel - self.COLS) % len(CHARACTERS)
-            elif key == pygame.K_DOWN:
-                self.p2_sel = (self.p2_sel + self.COLS) % len(CHARACTERS)
-            elif key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_SPACE):
-                self.p2_confirmed = True
-            elif key == pygame.K_ESCAPE:
-                # Desconfirmar P1
-                self.p1_confirmed = False
-                self.p2_confirmed = False
-                self.cursor = "p1"
-                return None
-
-        if key == pygame.K_ESCAPE and not self.p1_confirmed:
-            return "menu"
-
-        if self.p1_confirmed and self.p2_confirmed:
-            return (self.p1_sel, self.p2_sel)
-        return None
-
-    def handle_click(self, pos):
-        for i, r in enumerate(self._card_rects):
-            if r.collidepoint(pos):
-                if not self.p1_confirmed:
-                    self.p1_sel = i
-                    self.p1_confirmed = True
-                    self.cursor = "p2"
-                else:
-                    self.p2_sel = i
-                    self.p2_confirmed = True
-        if self._ready_rect and self._ready_rect.collidepoint(pos):
-            if self.p1_confirmed and self.p2_confirmed:
-                return (self.p1_sel, self.p2_sel)
-        return None
-
-    def draw(self, surf: pygame.Surface, bg: Background):
-        bg.draw(surf, self.frame)
-        overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
-        pygame.draw.rect(overlay, (8, 2, 0, 185), (0, 0, SCREEN_W, SCREEN_H))
-        surf.blit(overlay, (0, 0))
-
-        # Título
-        _outline_text(surf, self.font_med, "¡ELIGE TU PERSONAJE!",
-                      C_TEXT_GOLD, C_TEXT_OUT, SCREEN_W // 2, 38)
-
-        sx, sy, gx, gy = self._grid_origin()
-        self._card_rects = []
-
-        for i, ch in enumerate(CHARACTERS):
-            col = i % self.COLS
-            row = i // self.COLS
-            rx = sx + col * (self.CARD_W + gx)
-            ry = sy + row * (self.CARD_H + gy)
-            rect = pygame.Rect(rx, ry, self.CARD_W, self.CARD_H)
-            self._card_rects.append(rect)
-
-            is_p1 = (i == self.p1_sel)
-            is_p2 = (i == self.p2_sel)
-            is_cursor = (not self.p1_confirmed and is_p1) or \
-                        (self.p1_confirmed and not self.p2_confirmed and is_p2)
-
-            # Sombra
-            sh = pygame.Surface((self.CARD_W + 4, self.CARD_H + 6), pygame.SRCALPHA)
-            pygame.draw.rect(sh, (0, 0, 0, 100),
-                             (4, 6, self.CARD_W, self.CARD_H), border_radius=12)
-            surf.blit(sh, (rx - 2, ry))
-
-            # Fondo tarjeta
-            bg_col = (55, 22, 0) if is_cursor else (22, 7, 0)
-            pygame.draw.rect(surf, bg_col, rect, border_radius=12)
-
-            # Dibujar mini-personaje en la tarjeta
-            mini = pygame.Surface((self.CARD_W, self.CARD_H), pygame.SRCALPHA)
-            # Crea un Fighter temporal sólo para dibujar
-            tmp_fighter = Fighter.__new__(Fighter)
-            tmp_fighter.pal = ch["palette"]
-            tmp_fighter.state = State.IDLE
-            tmp_fighter.frame = self.frame
-            tmp_fighter.facing = 1
-            tmp_fighter.on_ground = True
-            tmp_fighter.vx = 0
-            tmp_fighter.ko = False
-            tmp_fighter.is_blocking = False
-            tmp_fighter.hit_stun = 0
-            tmp_fighter.x = 0.0
-            tmp_fighter.y = 0.0
-            tmp_fighter._draw_character(mini)
-            # Escalar y centrar
-            scale_f = 0.62
-            mini_scaled = pygame.transform.scale(
-                mini,
-                (int(mini.get_width() * scale_f), int(mini.get_height() * scale_f))
-            )
-            mw, mh = mini_scaled.get_size()
-            surf.blit(mini_scaled, (rx + self.CARD_W // 2 - mw // 2 - 5,
-                                    ry + 10))
-
-            # Nombre del personaje
-            name_col = C_TEXT_GOLD if is_cursor else (160, 90, 20)
-            ns = self.font_small.render(ch["name"], True, name_col)
-            surf.blit(ns, (rx + self.CARD_W // 2 - ns.get_width() // 2,
-                           ry + self.CARD_H - 28))
-
-            # Badge P1 / P2
-            if self.p1_confirmed and is_p1:
-                badge_col = C_P1_BODY
-                badge_txt = "P1"
-                bs = self.font_small.render(badge_txt, True, badge_col)
-                bx2 = rx + 8
-                by2 = ry + 8
-                pygame.draw.rect(surf, (80, 40, 0),
-                                 (bx2 - 4, by2 - 2,
-                                  bs.get_width() + 8, bs.get_height() + 4),
-                                 border_radius=4)
-                surf.blit(bs, (bx2, by2))
-
-            if self.p2_confirmed and is_p2:
-                badge_col = C_P2_BODY
-                badge_txt = "P2"
-                bs = self.font_small.render(badge_txt, True, badge_col)
-                bx2 = rx + self.CARD_W - bs.get_width() - 12
-                by2 = ry + 8
-                pygame.draw.rect(surf, (10, 40, 60),
-                                 (bx2 - 4, by2 - 2,
-                                  bs.get_width() + 8, bs.get_height() + 4),
-                                 border_radius=4)
-                surf.blit(bs, (bx2, by2))
-
-            # Borde cursor
-            border_w = 4 if is_cursor else 2
-            border_col = C_TEXT_GOLD if is_cursor else (60, 25, 0)
-            if not self.p1_confirmed and is_p1:
-                border_col = C_P1_BODY
-            if self.p1_confirmed and is_p2:
-                border_col = C_P2_BODY
-            pygame.draw.rect(surf, border_col, rect, border_w, border_radius=12)
-
-        # ─ Panel inferior: instrucciones / confirmación ─
-        panel_y = sy + self.ROWS * (self.CARD_H + gy) + 10
-
-        if not self.p1_confirmed:
-            hint = "P1 (WASD / ←→↑↓):  elige personaje   J / ENTER: confirmar"
-        elif not self.p2_confirmed:
-            hint = "P2 (←→↑↓):  elige personaje   ENTER: confirmar   ESC: volver"
-        else:
-            hint = "¡Ambos listos!  Pulsa ENTER para pelear"
-
-        hs = self.font_small.render(hint, True, (200, 140, 50))
-        surf.blit(hs, (SCREEN_W // 2 - hs.get_width() // 2, panel_y + 4))
-
-        # Botón listo (si ambos confirmaron)
-        if self.p1_confirmed and self.p2_confirmed:
-            bw, bh = 260, 52
-            bx = SCREEN_W // 2 - bw // 2
-            by = panel_y + 34
-            bob = int(math.sin(self.frame * 0.1) * 5)
-            self._ready_rect = pygame.Rect(bx, by, bw, bh)
-            pygame.draw.rect(surf, C_TEXT_OUT,  (bx, by + bob, bw, bh), border_radius=10)
-            pygame.draw.rect(surf, C_SKY_BOT,   (bx+2, by+2+bob, bw-4, bh-4), border_radius=8)
-            pygame.draw.rect(surf, C_TEXT_OUT,  (bx, by + bob, bw, bh), 3, border_radius=10)
-            bt = self.font_med.render("¡PELEAR!", True, C_UI_BG)
-            surf.blit(bt, (SCREEN_W // 2 - bt.get_width() // 2,
-                           by + bh // 2 - bt.get_height() // 2 + bob))
-        else:
-            self._ready_rect = None
-
-
-# ─────────────────────────────────────────────
 #  Clase principal del juego
 # ─────────────────────────────────────────────
 class Game:
@@ -691,23 +477,15 @@ class Game:
         self.announce_delay = 0
         self.title_screen   = TitleScreen(self._fonts)
         self.main_menu      = MainMenu(self._fonts)
-        self.char_select    = CharSelectScreen(self._fonts)
         self.coming_soon    = None
-        self._p1_char_idx   = 0
-        self._p2_char_idx   = 1
         self._init_fight()
 
     def _init_fight(self):
-        self.p1        = _make_p1(self._p1_char_idx)
-        self.p2        = _make_p2(self._p2_char_idx)
+        self.p1        = _make_p1()
+        self.p2        = _make_p2()
         self.round_num = 1
         self.p1_wins   = 0
         self.p2_wins   = 0
-
-    def _init_round(self):
-        """Reinicia sólo a los luchadores (conserva wins y round_num)."""
-        self.p1 = _make_p1(self._p1_char_idx)
-        self.p2 = _make_p2(self._p2_char_idx)
 
     # ── Loop ──────────────────────────────────
     def run(self):
@@ -743,19 +521,11 @@ class Game:
             if result == "title":
                 self.state = GameState.TITLE
             elif result == "fight":
-                self._go_to_char_select()
+                self._start_battle()
             elif result == "coming_soon":
                 label = MENU_OPTIONS[self.main_menu.selected]["label"]
                 self.coming_soon = ComingSoonScreen(self._fonts, label)
                 self.state = GameState.COMING_SOON
-
-        elif self.state == GameState.CHAR_SELECT:
-            result = self.char_select.handle_key(key)
-            if result == "menu":
-                self.state = GameState.MENU
-            elif isinstance(result, tuple):
-                self._p1_char_idx, self._p2_char_idx = result
-                self._start_battle()
 
         elif self.state == GameState.COMING_SOON:
             if key == pygame.K_ESCAPE:
@@ -767,7 +537,7 @@ class Game:
                 self.state = GameState.MENU
             if self.state == GameState.GAME_OVER and key in (
                     pygame.K_RETURN, pygame.K_SPACE):
-                self._go_to_char_select()
+                self._start_battle()
 
         return None
 
@@ -782,17 +552,11 @@ class Game:
             if result == "title":
                 self.state = GameState.TITLE
             elif result == "fight":
-                self._go_to_char_select()
+                self._start_battle()
             elif result == "coming_soon":
                 label = MENU_OPTIONS[self.main_menu.selected]["label"]
                 self.coming_soon = ComingSoonScreen(self._fonts, label)
                 self.state = GameState.COMING_SOON
-
-        elif self.state == GameState.CHAR_SELECT:
-            result = self.char_select.handle_click(pos)
-            if isinstance(result, tuple):
-                self._p1_char_idx, self._p2_char_idx = result
-                self._start_battle()
 
         elif self.state == GameState.COMING_SOON and self.coming_soon:
             result = self.coming_soon.handle_click(pos)
@@ -802,10 +566,6 @@ class Game:
     def _go_to_menu(self):
         self.main_menu = MainMenu(self._fonts)
         self.state = GameState.MENU
-
-    def _go_to_char_select(self):
-        self.char_select = CharSelectScreen(self._fonts)
-        self.state = GameState.CHAR_SELECT
 
     def _start_battle(self):
         self._init_fight()
@@ -822,9 +582,6 @@ class Game:
 
         elif self.state == GameState.MENU:
             self.main_menu.update()
-
-        elif self.state == GameState.CHAR_SELECT:
-            self.char_select.update()
 
         elif self.state == GameState.COMING_SOON and self.coming_soon:
             self.coming_soon.update()
@@ -867,7 +624,7 @@ class Game:
                     self.hud.show_announcement(champ, 9999)
                 else:
                     self.round_num += 1
-                    self._init_round()
+                    self._init_fight()
                     self.state = GameState.ANNOUNCE
                     self.hud.show_announcement(f"ROUND  {self.round_num}\n¡PELEA!", 140)
                     self.announce_delay = 145
@@ -895,9 +652,6 @@ class Game:
         elif self.state == GameState.MENU:
             self.main_menu.draw(self.screen, self.bg)
 
-        elif self.state == GameState.CHAR_SELECT:
-            self.char_select.draw(self.screen, self.bg)
-
         elif self.state == GameState.COMING_SOON and self.coming_soon:
             self.coming_soon.draw(self.screen, self.bg)
 
@@ -910,7 +664,7 @@ class Game:
 
             if self.state == GameState.GAME_OVER:
                 hint = self.font_small.render(
-                    "ENTER  ·  Revancha (elige personajes)     ESC  ·  Menú",
+                    "ENTER  ·  Revancha     ESC  ·  Menú",
                     True, (200, 134, 10))
                 self.screen.blit(hint, (SCREEN_W // 2 - hint.get_width() // 2,
                                         SCREEN_H - 36))

@@ -148,14 +148,6 @@ class Fighter:
         # Actualizar hitbox de ataque
         self._update_attack_hb()
 
-        # Limpiar estado de ataque cuando termina el timer
-        if self.is_attacking() and self.atk_timer == 0:
-            self.state = State.IDLE
-
-        # Limpiar hit-stun
-        if self.state == State.HIT and self.hit_stun == 0:
-            self.state = State.IDLE
-
         # Actualizar estado (sólo si no está ocupado)
         if not self.is_attacking() and self.state != State.HIT:
             if not self.on_ground:
@@ -166,6 +158,9 @@ class Fighter:
                 self.state = State.BLOCK
             else:
                 self.state = State.IDLE
+
+        if self.state == State.HIT and self.hit_stun == 0:
+            self.state = State.IDLE
 
         # Orientar hacia el oponente
         if not self.is_attacking():
